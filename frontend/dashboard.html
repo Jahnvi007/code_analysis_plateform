@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    body {
+      margin: 0;
+      background: #020617;
+      color: white;
+      font-family: Arial;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .box {
+      background: #1e293b;
+      padding: 30px;
+      border-radius: 12px;
+      width: 360px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 20px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h2>Dashboard</h2>
+  <p>Email: <b id="email"></b></p>
+  <p>User ID: <b id="uid"></b></p>
+  <button onclick="logout()">Logout</button>
+</div>
+
+<script>
+const token = localStorage.getItem("token");
+
+if (!token) {
+  window.location.href = "auth.html";
+}
+
+document.getElementById("email").textContent = localStorage.getItem("email");
+document.getElementById("uid").textContent = localStorage.getItem("userId");
+
+function logout() {
+  localStorage.clear();
+  window.location.href = "auth.html";
+}
+</script>
+
+</body>
+</html>
