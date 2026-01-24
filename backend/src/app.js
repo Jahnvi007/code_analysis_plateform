@@ -9,8 +9,9 @@ import protectedRoutes from "./routes/protected.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import submissionRoutes from "./routes/submission.routes.js";
-import comparisonRoutes from "./routes/comparison.routes.js";  // ← ADD THIS
-import { errorHandler, notFound } from "./middlewares/error.middleware.js";  // ← ADD THIS
+import comparisonRoutes from "./routes/comparison.routes.js";
+import healthRoutes from "./routes/health.routes.js";
+import { errorHandler, notFound } from "./middlewares/error.middleware.js";
 
 const app = express();
 
@@ -30,6 +31,7 @@ app.get("/ping", (req, res) => {
 
 // PUBLIC routes
 app.use("/api/auth", authRoutes);
+app.use("/api/health", healthRoutes);
 
 // PROTECTED routes
 app.use("/api/users", userRoutes);
