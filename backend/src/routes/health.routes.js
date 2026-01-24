@@ -1,16 +1,13 @@
 // backend/src/routes/health.routes.js
 import express from 'express';
-import BaseOllamaService from '../services/ollama/base.service.js';
+import ComparisonService from '../services/ollama/comparison.service.js';
 
 const router = express.Router();
 
-// Create an instance to get health status
-const healthChecker = new BaseOllamaService();
-
 router.get('/ollama', async (req, res) => {
   try {
-    // Force a fresh health check
-    const health = await healthChecker.checkHealth();
+    // Use the existing service instance to get health status
+    const health = await ComparisonService.checkHealth();
     
     res.status(health.available ? 200 : 503).json({
       status: health.available ? 'healthy' : 'unhealthy',

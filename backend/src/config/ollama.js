@@ -5,6 +5,7 @@ export const OLLAMA_CONFIG = {
   timeout: parseInt(process.env.OLLAMA_TIMEOUT_MS) || 30000,
   maxRetries: parseInt(process.env.OLLAMA_MAX_RETRIES) || 3,
   healthCheckInterval: 30000, // 30 seconds
+  healthCheckTimeout: 5000, // 5 seconds for health checks
   options: {
     num_gpu: parseInt(process.env.OLLAMA_NUM_GPU) || 0,
     num_ctx: 2048,

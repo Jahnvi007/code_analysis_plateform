@@ -36,7 +36,9 @@ class ExplanationService extends BaseOllamaService {
       };
     }
 
-    console.log("🦙 Ollama explanation completed successfully");
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("🦙 Ollama explanation completed successfully");
+    }
 
     return {
       success: true,

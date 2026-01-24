@@ -50,7 +50,7 @@ class BaseOllamaService {
     try {
       const fetch = (await import('node-fetch')).default;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), OLLAMA_CONFIG.healthCheckTimeout);
 
       const response = await fetch(`${this.baseUrl}/api/tags`, {
         signal: controller.signal
@@ -74,10 +74,16 @@ class BaseOllamaService {
       };
 
       if (!modelExists) {
-        console.log(`⚠️  Ollama model '${this.model}' not found. Available models:`, 
-          data.models.map(m => m.name).join(', '));
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`⚠️  Ollama model '${this.model}' not found. Available models:`, 
+            data.models.map(m => m.name).join(', '));
+        } else {
+          console.log(`⚠️  Ollama model '${this.model}' not found`);
+        }
       } else {
-        console.log(`✅ Ollama health check passed (${this.healthStatus.responseTime}ms)`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`✅ Ollama health check passed (${this.healthStatus.responseTime}ms)`);
+        }
       }
 
       return this.healthStatus;
@@ -154,11 +160,15 @@ class BaseOllamaService {
         };
         
       } catch (error) {
-        console.log(`⚠️  Attempt ${attempt}/${maxRetries} failed:`, error.message);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`⚠️  Attempt ${attempt}/${maxRetries} failed:`, error.message);
+        }
         
         if (attempt < maxRetries) {
           const delay = 1000 * Math.pow(2, attempt - 1); // Exponential backoff: 1s, 2s, 4s
-          console.log(`⏳ Retrying in ${delay}ms...`);
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`⏳ Retrying in ${delay}ms...`);
+          }
           await this.sleep(delay);
           continue;
         }

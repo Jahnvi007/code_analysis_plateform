@@ -32,7 +32,9 @@ class ComparisonService extends BaseOllamaService {
 
     const processingTime = ((Date.now() - startTime) / 1000).toFixed(2);
 
-    console.log("📢 Ollama comparison completed in", processingTime + "s");
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("📢 Ollama comparison completed in", processingTime + "s");
+    }
 
     return {
       success: true,

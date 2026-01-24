@@ -43,14 +43,15 @@ Provide concise analysis with actionable suggestions.`;
       };
     }
 
+    // Return the raw AI response as explanation
+    // TODO: Future enhancement - parse structured data from AI response
     return {
-      timeComplexity: "Unknown", // Parse from result.response if needed
-      spaceComplexity: "Unknown", // Parse from result.response if needed
+      timeComplexity: "See explanation",
+      spaceComplexity: "See explanation",
       explanation: result.response || "",
       bottlenecks: [],
       optimizationSuggestions: []
     };
   }
 }
-
 export default new PerformanceAnalysisService();
