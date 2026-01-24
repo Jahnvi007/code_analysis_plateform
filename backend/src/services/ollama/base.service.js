@@ -24,8 +24,8 @@ class BaseOllamaService {
    * Start background health checks every 30 seconds
    */
   startHealthChecks() {
-    // Initial check
-    this.checkHealth();
+    // Initial check (async, non-blocking)
+    this.initialHealthCheckPromise = this.checkHealth();
     
     // Periodic checks
     this.healthCheckInterval = setInterval(() => {
@@ -112,14 +112,16 @@ class BaseOllamaService {
    * Generate completion with retry logic and timeout handling
    */
   async generateCompletion(prompt, options = {}) {
-    // Check if service is available
-    if (!this.healthStatus.available) {
-      return {
-        success: false,
-        error: this.healthStatus.error || 'service_unavailable',
-        message: this.getErrorMessage(this.healthStatus.error || 'service_unavailable')
-      };
+    // Wait for initial health check to complete if it's still in progress
+    if (this.initialHealthCheckPromise) {
+      await this.initialHealthCheckPromise;
+      this.initialHealthCheckPromise = null;
     }
+
+    // Note: We don't bail early even if health check failed, because:
+    // 1. Temporary network issues might resolve
+    // 2. Retry logic will handle failures gracefully
+    // 3. Provides better error messages from actual request attempts
 
     const maxRetries = options.maxRetries || this.maxRetries;
     
