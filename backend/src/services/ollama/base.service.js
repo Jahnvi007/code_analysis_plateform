@@ -50,7 +50,8 @@ class BaseOllamaService {
     try {
       const fetch = (await import('node-fetch')).default;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), OLLAMA_CONFIG.healthCheckTimeout);
+     const timeoutId = setTimeout(() => controller.abort(), 60000); // ← 60 seconds
+
 
       const response = await fetch(`${this.baseUrl}/api/tags`, {
         signal: controller.signal
