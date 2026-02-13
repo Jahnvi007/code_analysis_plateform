@@ -93,3 +93,5 @@ To test with real Ollama:
 1. Start Ollama: `ollama serve`
 2. Download model: `ollama pull qwen2.5-coder:7b`
 3. Run manual scripts: `node scripts/test-ollama-health.js`
+
+

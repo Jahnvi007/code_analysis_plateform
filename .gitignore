@@ -1,18 +1,32 @@
-# Dependencies
+# Dependencies (huge folders, don't upload!)
 node_modules/
 backend/node_modules/
+frontend/node_modules/
 
-# Environment variables
+# Environment variables (CONTAINS SECRETS!)
 .env
-.env.*
+.env.local
+.env.production
+backend/.env
+frontend/.env
 
-# Logs
+# Temporary code execution files
+backend/temp/
+*.tmp
+
+# Log files
 *.log
 logs/
+npm-debug.log*
 
-# OS
+# OS system files
 .DS_Store
 Thumbs.db
 
-# Backup files
-*.backup
+# IDE settings
+.vscode/
+.idea/
+
+# Build outputs
+dist/
+build/
