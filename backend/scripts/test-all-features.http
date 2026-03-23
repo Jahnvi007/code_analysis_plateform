@@ -84,7 +84,9 @@ GET {{base}}/api/problems
 Authorization: Bearer {{token}}
 
 ### ──────────────────────────────────────────────────────────────────────
-### Expected: 200 – array of { _id, title, difficulty, createdAt }
+### Expected: 200 – array of { _id, title, difficulty, constraints, createdAt, scheduledDate, scheduledDayIST }
+###           scheduledDate / scheduledDayIST are null for unscheduled problems,
+###           and show the IST date string (e.g. "2026-03-24") for daily problems.
 
 
 ### 2.2  ★ Get TODAY's daily problem (the one seeded by seed:today)

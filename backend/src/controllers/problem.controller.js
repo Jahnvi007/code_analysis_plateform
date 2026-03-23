@@ -47,7 +47,7 @@ export const createProblem = async (req, res) => {
 export const getAllProblems = async (req, res) => {
   try {
     const problems = await Problem.find().select(
-      "title difficulty constraints createdAt"
+      "title difficulty constraints createdAt scheduledDate scheduledDayIST"
     );
 
     res.status(200).json(problems);
