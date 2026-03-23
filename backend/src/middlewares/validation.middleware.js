@@ -78,5 +78,14 @@ export const validateProblem = (req, res, next) => {
     });
   }
 
+  // Validate scheduledDate if provided (optional field)
+  if ("scheduledDate" in req.body && req.body.scheduledDate !== null) {
+    if (isNaN(Date.parse(req.body.scheduledDate))) {
+      return res.status(400).json({
+        message: "scheduledDate must be a valid date string"
+      });
+    }
+  }
+
   next();
 };
