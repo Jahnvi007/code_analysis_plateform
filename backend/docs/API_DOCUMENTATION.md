@@ -9,7 +9,7 @@ Most endpoints require JWT token:
 
 ---
 
-## 🔐 Authentication Endpoints
+##  Authentication Endpoints
 
 ### Register User
 ```http
@@ -96,7 +96,7 @@ Request:
 }
 
 
-🏃 Submission Endpoints
+ Submission Endpoints
 Submit Code
 HTTP
 POST /api/submissions/submit
@@ -145,7 +145,7 @@ Response (200):
 }
 
 
-🔄 Comparison Endpoints
+ Comparison Endpoints
 Compare with Top Solution
 HTTP
 POST /api/comparison/compare/:submissionId
@@ -166,7 +166,7 @@ Get Top Solutions
 HTTP
 GET /api/comparison/top/:problemId
 Authorization: Bearer <token>
-📊 Stats Endpoints
+ Stats Endpoints
 Get My Stats
 HTTP
 GET /api/stats/me
@@ -196,7 +196,7 @@ Response (200):
 ]
 
 
-🏥 Health Endpoint
+ Health Endpoint
 Check Ollama Health
 HTTP
 GET /api/health/ollama
@@ -208,7 +208,7 @@ Response (200):
   "available": true,
   "responseTime": 10
 }
-❌ Error Responses
+ Error Responses
 400 Bad Request
 JSON
 {
