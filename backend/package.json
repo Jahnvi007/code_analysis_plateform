@@ -10,7 +10,8 @@
     "dev": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "fix-problems": "node src/utils/updateProblems.js",
-"fix-scores": "node src/utils/recalculateScores.js"
+    "fix-scores": "node src/utils/recalculateScores.js",
+    "seed:today": "node scripts/seedTodayProblem.js"
   },
   "keywords": [
     "code",
