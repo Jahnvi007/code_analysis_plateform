@@ -1,4 +1,43 @@
 //backend/src/middlewares/validation.middleware.js
+
+// ─── Auth validators ────────────────────────────────────────────────────────
+
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
+
+export const validateSignup = (req, res, next) => {
+  const { name, email, password } = req.body;
+
+  if (!name || typeof name !== "string" || name.trim().length < 2) {
+    return res.status(400).json({ message: "Name must be at least 2 characters" });
+  }
+
+  if (!email || !EMAIL_REGEX.test(email)) {
+    return res.status(400).json({ message: "A valid email address is required" });
+  }
+
+  if (!password || password.length < 8) {
+    return res.status(400).json({ message: "Password must be at least 8 characters" });
+  }
+
+  next();
+};
+
+export const validateLogin = (req, res, next) => {
+  const { email, password } = req.body;
+
+  if (!email || !EMAIL_REGEX.test(email)) {
+    return res.status(400).json({ message: "A valid email address is required" });
+  }
+
+  if (!password) {
+    return res.status(400).json({ message: "Password is required" });
+  }
+
+  next();
+};
+
+// ─── Submission validator ────────────────────────────────────────────────────
+
 export const validateSubmission = (req, res, next) => {
   const { problemId, code, language } = req.body;
 

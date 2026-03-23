@@ -1,6 +1,7 @@
 /*backend/src/controllers/problem.controller.js*/
 import Problem from "../models/Problem.model.js";
 import { getISTDayKey } from "../utils/date.util.js";
+import { parsePagination } from "../utils/pagination.util.js";
 
 /* ================= CREATE PROBLEM (ADMIN) ================= */
 export const createProblem = async (req, res) => {
@@ -46,11 +47,25 @@ export const createProblem = async (req, res) => {
 /* ================= GET ALL PROBLEMS (USER) ================= */
 export const getAllProblems = async (req, res) => {
   try {
-    const problems = await Problem.find().select(
-      "title difficulty constraints createdAt scheduledDate scheduledDayIST"
-    );
+    const { page, limit, skip } = parsePagination(req.query, 10);
 
-    res.status(200).json(problems);
+    const [problems, total] = await Promise.all([
+      Problem.find()
+        .select("title difficulty constraints createdAt scheduledDate scheduledDayIST")
+        .skip(skip)
+        .limit(limit),
+      Problem.countDocuments()
+    ]);
+
+    res.status(200).json({
+      data: problems,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch problems" });
   }

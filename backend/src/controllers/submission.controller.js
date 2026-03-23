@@ -8,6 +8,7 @@ import { wrapPythonCode } from "../utils/pythonWrapper.js";
 import { calculateProblemScore } from "../utils/score.util.js";
 import PerformanceAnalysisService from "../services/performanceAnalysis.service.js";
 import ExplanationService from "../services/ai/explanation.service.js";
+import { parsePagination } from "../utils/pagination.util.js";
 
 /* ------------------- SUBMIT CODE ------------------- */
 export const submitCode = async (req, res) => {
@@ -164,11 +165,25 @@ export const explainSubmission = async (req, res) => {
 /* ------------------- GET MY SUBMISSIONS ------------------- */
 export const getMySubmissions = async (req, res) => {
   try {
-    const submissions = await Submission.find({ user: req.user.id })
-      .sort({ createdAt: -1 })
-      .limit(20);
+    const { page, limit, skip } = parsePagination(req.query, 20);
 
-    res.status(200).json(submissions);
+    const [submissions, total] = await Promise.all([
+      Submission.find({ user: req.user.id })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit),
+      Submission.countDocuments({ user: req.user.id })
+    ]);
+
+    res.status(200).json({
+      data: submissions,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    });
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch submissions" });
   }
