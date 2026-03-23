@@ -1,11 +1,10 @@
 // backend/src/services/ai/explanation.service.js
 
-import { OLLAMA_CONFIG } from "../../config/ollama.js";
+import BaseOllamaService from "../ollama/base.service.js";
 
-class ExplanationService {
+class ExplanationService extends BaseOllamaService {
   constructor() {
-    this.baseUrl = OLLAMA_CONFIG.url;
-    this.model = OLLAMA_CONFIG.model;
+    super();
   }
 
   async explainSubmission({
@@ -25,57 +24,37 @@ class ExplanationService {
       language
     });
 
-    try {
-      const fetch = (await import("node-fetch")).default;
+    console.log("🦙 Sending explanation prompt to Ollama");
 
-      const response = await fetch(`${this.baseUrl}/api/generate`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: this.model,
-          prompt,
-          stream: false,
-          options: OLLAMA_CONFIG.options
-        }),
-        timeout: OLLAMA_CONFIG.timeout
-      });
+    const result = await this.generateCompletion(prompt);
 
-      const data = await response.json();
-
-console.log("🦙 RAW OLLAMA RESPONSE:", JSON.stringify(data, null, 2));
-
-if (data.error) {
-  console.error("❌ OLLAMA ERROR:", data.error);
-  return {
-    success: false,
-    explanation: "AI service is temporarily unavailable. Please try again later."
-  };
-}
-
-return {
-  success: true,
-  explanation: data.response || "AI did not return an explanation."
-};
-
-
-
-    } catch (error) {
+    if (!result.success) {
+      console.error("❌ OLLAMA ERROR:", result.error);
       return {
         success: false,
-        explanation: "AI explanation failed. Please try again later."
+        explanation: result.message || "AI service is temporarily unavailable. Please try again later."
       };
     }
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log("🦙 Ollama explanation completed successfully");
+    }
+
+    return {
+      success: true,
+      explanation: result.response || "AI did not return an explanation."
+    };
   }
 
-buildPrompt({
-  problemTitle,
-  problemStatement,
-  testResults,
-  userCode,
-  verdict,
-  language
-}) {
-  return `
+  buildPrompt({
+    problemTitle,
+    problemStatement,
+    testResults,
+    userCode,
+    verdict,
+    language
+  }) {
+    return `
 You are an expert competitive programming mentor.
 
 Problem:
@@ -104,8 +83,7 @@ STRICT RULES:
 - ✅ Beginner-friendly
 - ✅ Max 200 words
 `;
-}
-
+  }
 }
 
 export default new ExplanationService();

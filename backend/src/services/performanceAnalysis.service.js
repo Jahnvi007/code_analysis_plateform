@@ -1,7 +1,11 @@
 // src/services/performanceAnalysis.service.js
-import OllamaService from "./ollama.service.js";
+import BaseOllamaService from "./ollama/base.service.js";
 
-class PerformanceAnalysisService {
+class PerformanceAnalysisService extends BaseOllamaService {
+  constructor() {
+    super();
+  }
+
   /**
    * Analyze a single submission
    * @param {Object} submission - MongoDB submission document
@@ -27,11 +31,7 @@ MemoryUsedKB: ${metrics?.maxMemoryUsedKB || 0}
 
 Provide concise analysis with actionable suggestions.`;
 
-    const result = await OllamaService.generate({
-      prompt,
-      model: "qwen2.5-coder:7b",
-      stream: false
-    });
+    const result = await this.generateCompletion(prompt);
 
     if (!result.success) {
       return {
@@ -43,14 +43,15 @@ Provide concise analysis with actionable suggestions.`;
       };
     }
 
+    // Return the raw AI response as explanation
+    // TODO: Future enhancement - parse structured data from AI response
     return {
-      timeComplexity: result.timeComplexity || "Unknown",
-      spaceComplexity: result.spaceComplexity || "Unknown",
-      explanation: result.explanation || "",
-      bottlenecks: result.bottlenecks || [],
-      optimizationSuggestions: result.optimizationSuggestions || []
+      timeComplexity: "See explanation",
+      spaceComplexity: "See explanation",
+      explanation: result.response || "",
+      bottlenecks: [],
+      optimizationSuggestions: []
     };
   }
 }
-
 export default new PerformanceAnalysisService();
