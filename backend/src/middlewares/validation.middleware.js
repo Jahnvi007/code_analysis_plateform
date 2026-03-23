@@ -78,5 +78,13 @@ export const validateProblem = (req, res, next) => {
     });
   }
 
+  if (req.body.scheduledDate !== undefined) {
+    if (isNaN(Date.parse(req.body.scheduledDate))) {
+      return res.status(400).json({
+        message: "scheduledDate must be a valid date string"
+      });
+    }
+  }
+
   next();
 };

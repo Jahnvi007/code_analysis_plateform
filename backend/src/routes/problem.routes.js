@@ -7,6 +7,7 @@ import {
   createProblem,
   getAllProblems,
   getProblemById,
+  getTodayProblem,
   updateProblem,
   deleteProblem
 } from "../controllers/problem.controller.js";
@@ -38,6 +39,7 @@ router.delete(
 
 /* ===== USER ===== */
 router.get("/", authMiddleware, getAllProblems);
+router.get("/today", authMiddleware, getTodayProblem);
 router.get("/:id", authMiddleware, getProblemById);
 
 export default router;
