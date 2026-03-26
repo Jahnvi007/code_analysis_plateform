@@ -1,0 +1,279 @@
+### ══════════════════════════════════════════════════════════════════════
+### END-TO-END TEST SUITE  –  Code Analysis Platform
+###
+### Compatible with VS Code REST Client extension, IntelliJ HTTP Client,
+### and curl (use the curl translations below each request).
+###
+### HOW TO USE
+###   1.  Start the backend:          npm run dev
+###   2.  Seed today's daily problem:  npm run seed:today
+###   3.  Run these requests top-to-bottom.
+###   4.  Copy the JWT from the login response into @token below.
+###   5.  Copy IDs from responses into the @… variables below.
+### ══════════════════════════════════════════════════════════════════════
+
+@base = http://localhost:5000
+
+### ── shared variables (fill in after running the relevant requests) ──
+@token          = PASTE_JWT_HERE
+@problemId      = PASTE_PROBLEM_ID_HERE
+@submissionId   = PASTE_SUBMISSION_ID_HERE
+
+
+### ══════════════════════════════════════════════════════════════════════
+### 0. HEALTH CHECK
+### ══════════════════════════════════════════════════════════════════════
+
+### 0.1  Ping
+GET {{base}}/ping
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 200 – "Server is alive"
+
+
+### ══════════════════════════════════════════════════════════════════════
+### 1. AUTH
+### ══════════════════════════════════════════════════════════════════════
+
+### 1.1  Register a new test user
+POST {{base}}/api/auth/signup
+Content-Type: application/json
+
+{
+  "name": "Test User",
+  "email": "testuser@example.com",
+  "password": "Password123!"
+}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 201 – { "message": "User registered successfully", "userId": "..." }
+
+
+### 1.2  Login (copy the "token" from the response into @token above)
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "Password123!"
+}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 200 – { "token": "eyJ...", "userId": "..." }
+
+
+### 1.3  Login with wrong password → should fail
+POST {{base}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "testuser@example.com",
+  "password": "wrongpassword"
+}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 401 – { "message": "Invalid credentials" }
+
+
+### ══════════════════════════════════════════════════════════════════════
+### 2. PROBLEMS
+### ══════════════════════════════════════════════════════════════════════
+
+### 2.1  Get all problems (requires auth)
+GET {{base}}/api/problems
+Authorization: Bearer {{token}}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 200 – array of { _id, title, difficulty, constraints, createdAt, scheduledDate, scheduledDayIST }
+###           scheduledDate / scheduledDayIST are null for unscheduled problems,
+###           and show the IST date string (e.g. "2026-03-24") for daily problems.
+
+
+### 2.2  ★ Get TODAY's daily problem (the one seeded by seed:today)
+###      This tests the IST-based scheduling feature.
+GET {{base}}/api/problems/today
+Authorization: Bearer {{token}}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 200 – full problem object with scheduledDayIST = today (IST)
+###           Copy the _id into @problemId above.
+
+
+### 2.3  Get a problem by ID (paste the ID from 2.2 into @problemId)
+GET {{base}}/api/problems/{{problemId}}
+Authorization: Bearer {{token}}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 200 – same problem, hidden test cases filtered out
+
+
+### 2.4  Try to access today's endpoint without auth → should fail
+GET {{base}}/api/problems/today
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 401 – { "message": "No token provided" } or similar
+
+
+### ══════════════════════════════════════════════════════════════════════
+### 3. SUBMISSIONS
+### ══════════════════════════════════════════════════════════════════════
+
+### 3.1  Submit a CORRECT sliding-window Python solution for today's problem
+###      (paste the @problemId from step 2.2)
+POST {{base}}/api/submissions/submit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "problemId": "{{problemId}}",
+  "language": "python",
+  "code": "s = input()\nstart = 0\nbest = 0\nseen = {}\nfor end, ch in enumerate(s):\n    if ch in seen and seen[ch] >= start:\n        start = seen[ch] + 1\n    seen[ch] = end\n    best = max(best, end - start + 1)\nprint(best)\n"
+}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 200 – { verdict: "Accepted", submission: { status: "Accepted", score: ... } }
+###           Copy submission._id into @submissionId above.
+
+
+### 3.2  Submit a WRONG answer (brute-force O(n³) with a logic bug)
+POST {{base}}/api/submissions/submit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "problemId": "{{problemId}}",
+  "language": "python",
+  "code": "s = input()\nprint(0)\n"
+}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 200 – { verdict: "Wrong Answer" }
+
+
+### 3.3  Submit with unsupported language → validation error
+POST {{base}}/api/submissions/submit
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "problemId": "{{problemId}}",
+  "language": "javascript",
+  "code": "console.log(42)"
+}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 400 – { "message": "Only Python supported currently" }
+
+
+### 3.4  Fetch my own submission history
+GET {{base}}/api/submissions/my-submissions
+Authorization: Bearer {{token}}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 200 – array of past submissions for this user
+
+
+### ══════════════════════════════════════════════════════════════════════
+### 4. AI EXPLANATION  (requires Ollama running locally)
+### ══════════════════════════════════════════════════════════════════════
+
+### 4.1  Ask AI to explain the accepted submission (paste @submissionId)
+POST {{base}}/api/submissions/{{submissionId}}/explain
+Authorization: Bearer {{token}}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 200 – { success: true, explanation: "..." }
+### Note: requires Ollama running (see backend/docs/OLLAMA_SETUP.md)
+
+
+### ══════════════════════════════════════════════════════════════════════
+### 5. COMPARISON  (requires at least 2 submissions for the same problem)
+### ══════════════════════════════════════════════════════════════════════
+
+### 5.1  Get top solutions for today's problem
+GET {{base}}/api/comparison/top/{{problemId}}
+Authorization: Bearer {{token}}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 200 – array of top submissions
+
+
+### 5.2  Compare your submission with the top solution
+POST {{base}}/api/comparison/compare/{{submissionId}}
+Authorization: Bearer {{token}}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 200 – { message: "Comparison generated", comparison: { aiAnalysis: "..." } }
+
+
+### ══════════════════════════════════════════════════════════════════════
+### 6. STATS
+### ══════════════════════════════════════════════════════════════════════
+
+### 6.1  Get my personal stats
+GET {{base}}/api/stats/me
+Authorization: Bearer {{token}}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 200 – { totalSubmissions, acceptedSubmissions, solvedProblems, avgScore }
+
+
+### ══════════════════════════════════════════════════════════════════════
+### 7. LEADERBOARD
+### ══════════════════════════════════════════════════════════════════════
+
+### 7.1  Get the global leaderboard (public)
+GET {{base}}/api/leaderboard
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 200 – [ { rank, name, totalScore, solvedProblems }, ... ]
+
+
+### ══════════════════════════════════════════════════════════════════════
+### 8. ADMIN OPERATIONS  (login as an admin user first and update @token)
+### ══════════════════════════════════════════════════════════════════════
+
+### 8.1  Create a second problem (no scheduledDate → not a daily problem)
+POST {{base}}/api/problems
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Reverse a Linked List",
+  "description": "Given the head of a singly-linked list, reverse it and return the new head.\n\nInput format: first line is N (number of nodes), second line is N space-separated integers.\nOutput: the reversed list values separated by spaces.",
+  "difficulty": "easy",
+  "constraints": "0 ≤ N ≤ 10^4",
+  "testCases": [
+    { "input": "5\n1 2 3 4 5", "output": "5 4 3 2 1", "isHidden": false, "size": "small" },
+    { "input": "1\n42",         "output": "42",         "isHidden": false, "size": "small" },
+    { "input": "0\n",           "output": "",            "isHidden": true,  "size": "small" }
+  ]
+}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 201 (admin) | 403 (non-admin user)
+
+
+### 8.2  Try to create a duplicate daily problem for the same IST date → conflict
+POST {{base}}/api/problems
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "title": "Duplicate Daily Problem",
+  "description": "This should fail because today already has a scheduled problem.",
+  "difficulty": "easy",
+  "constraints": "",
+  "testCases": [
+    { "input": "1", "output": "1", "isHidden": false, "size": "small" }
+  ],
+  "scheduledDate": "2026-03-23T00:00:00+05:30"
+}
+
+### ──────────────────────────────────────────────────────────────────────
+### Expected: 409 – { "message": "A problem is already scheduled for IST date: 2026-03-23" }
+
+
+### ══════════════════════════════════════════════════════════════════════
+### END OF TEST SUITE
+### ══════════════════════════════════════════════════════════════════════

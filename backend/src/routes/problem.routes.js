@@ -8,7 +8,8 @@ import {
   getAllProblems,
   getProblemById,
   updateProblem,
-  deleteProblem
+  deleteProblem,
+  getTodayProblem
 } from "../controllers/problem.controller.js";
 
 const router = express.Router();
@@ -38,6 +39,8 @@ router.delete(
 
 /* ===== USER ===== */
 router.get("/", authMiddleware, getAllProblems);
+// /today MUST be placed before /:id so Express does not treat "today" as an ObjectId
+router.get("/today", authMiddleware, getTodayProblem);
 router.get("/:id", authMiddleware, getProblemById);
 
 export default router;

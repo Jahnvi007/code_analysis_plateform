@@ -10,7 +10,8 @@
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
     "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
     "fix-problems": "node src/utils/updateProblems.js",
-    "fix-scores": "node src/utils/recalculateScores.js"
+    "fix-scores": "node src/utils/recalculateScores.js",
+    "seed:today": "node scripts/seedTodayProblem.js"
   },
   "keywords": [
     "code",

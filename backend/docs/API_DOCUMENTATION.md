@@ -3,19 +3,18 @@
 ## Base URL
 http://localhost:5000
 
-
 ## Authentication
 Most endpoints require JWT token:
 
 ---
 
-##  Authentication Endpoints
+## 🔐 Authentication Endpoints
 
 ### Register User
 ```http
 Content-Type: application/json in header
 POST /api/auth/signup
-request: body:
+Request Body:
 {
   "name": "John Doe",
   "email": "john@example.com",
@@ -26,7 +25,10 @@ Response (201):
   "message": "User registered successfully",
   "userId": "65a1b2c3d4e5f6789..."
 }
-Login
+```
+
+### Login
+```http
 POST /api/auth/login
 Content-Type: application/json
 Request:
@@ -40,13 +42,16 @@ Response (200):
   "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
   "userId": "65a1b2c3d4e5f6789..."
 }
+```
 
-Problem Endpoints
-List All Problems
-HTTP
+---
+
+## Problem Endpoints
+
+### List All Problems
+```http
 GET /api/problems
 Response (200):
-
 [
   {
     "_id": "698d6369966f1d614c6ee04c",
@@ -55,12 +60,13 @@ Response (200):
     "createdAt": "2026-02-12T05:21:45.255Z"
   }
 ]
-Get Problem Details
-HTTP
+```
+
+### Get Problem Details
+```http
 GET /api/problems/:id
 Authorization: Bearer <token>
 Response (200):
-
 {
   "_id": "698d6369966f1d614c6ee04c",
   "title": "Two Sum",
@@ -74,8 +80,10 @@ Response (200):
     }
   ]
 }
-Create Problem (Admin)
-HTTP
+```
+
+### Create Problem (Admin)
+```http
 POST /api/problems/create
 Authorization: Bearer <token>
 Content-Type: application/json
@@ -94,16 +102,18 @@ Request:
     }
   ]
 }
+```
 
+---
 
- Submission Endpoints
-Submit Code
-HTTP
+## 🏃 Submission Endpoints
+
+### Submit Code
+```http
 POST /api/submissions/submit
 Authorization: Bearer <token>
 Content-Type: application/json
 Request:
-
 {
   "problemId": "698d88e8575ac1c9ec5876f5",
   "code": "data = list(map(int, input().split()))\n...",
@@ -123,19 +133,23 @@ Response (200):
     }
   }
 }
-Possible Verdicts:
+```
 
-Accepted - All tests passed
-Wrong Answer - Output mismatch
-Time Limit Exceeded - Too slow
-Runtime Error - Code crashed
-Rejected - Forbidden syntax
-Get My Submissions
-HTTP
+#### Possible Verdicts:
+- Accepted — All tests passed
+- Wrong Answer — Output mismatch
+- Time Limit Exceeded — Too slow
+- Runtime Error — Code crashed
+- Rejected — Forbidden syntax
+
+### Get My Submissions
+```http
 GET /api/submissions/my-submissions
 Authorization: Bearer <token>
-Get AI Explanation
-HTTP
+```
+
+### Get AI Explanation
+```http
 POST /api/submissions/:id/explain
 Authorization: Bearer <token>
 Response (200):
@@ -143,11 +157,14 @@ Response (200):
   "success": true,
   "explanation": "Your solution uses O(n) time complexity..."
 }
+```
 
+---
 
- Comparison Endpoints
-Compare with Top Solution
-HTTP
+## 🔄 Comparison Endpoints
+
+### Compare with Top Solution
+```http
 POST /api/comparison/compare/:submissionId
 Authorization: Bearer <token>
 Response (200):
@@ -160,15 +177,20 @@ Response (200):
     }
   }
 }
+```
 
-
-Get Top Solutions
-HTTP
+### Get Top Solutions
+```http
 GET /api/comparison/top/:problemId
 Authorization: Bearer <token>
- Stats Endpoints
-Get My Stats
-HTTP
+```
+
+---
+
+## 📊 Stats Endpoints
+
+### Get My Stats
+```http
 GET /api/stats/me
 Authorization: Bearer <token>
 Response (200):
@@ -178,14 +200,12 @@ Response (200):
   "solvedProblems": 2,
   "avgScore": 48
 }
+```
 
-
-
-Get Leaderboard
-HTTP
+### Get Leaderboard
+```http
 GET /api/leaderboard
 Response (200):
-
 [
   {
     "rank": 1,
@@ -194,38 +214,44 @@ Response (200):
     "solvedProblems": 3
   }
 ]
+```
 
+---
 
- Health Endpoint
-Check Ollama Health
-HTTP
+## 🏥 Health Endpoint
+
+### Check Ollama Health
+```http
 GET /api/health/ollama
 Response (200):
-
 {
   "status": "healthy",
   "model": "qwen2.5-coder:1.5b",
   "available": true,
   "responseTime": 10
 }
- Error Responses
-400 Bad Request
-JSON
-{
-  "message": "Missing required fields"
-}
-401 Unauthorized
-JSON
-{
-  "message": "Invalid or expired token"
-}
-403 Forbidden
-JSON
-{
-  "message": "Access denied. Admin only."
-}
-404 Not Found
-JSON
-{
-  "message": "Resource not found"
-}
+```
+
+---
+
+## ❌ Error Responses
+
+### 400 Bad Request
+```json
+{ "message": "Missing required fields" }
+```
+
+### 401 Unauthorized
+```json
+{ "message": "Invalid or expired token" }
+```
+
+### 403 Forbidden
+```json
+{ "message": "Access denied. Admin only." }
+```
+
+### 404 Not Found
+```json
+{ "message": "Resource not found" }
+```
