@@ -142,6 +142,11 @@ export const explainSubmission = async (req, res) => {
     const submission = await Submission.findById(id).populate("problem");
     if (!submission) return res.status(404).json({ success: false, message: "Submission not found" });
 
+    // 🚨 Ownership check
+    if (submission.user.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: "Access denied" });
+    }
+
     // Call AI explanation service
     const aiResult = await ExplanationService.explainSubmission({
       problemTitle: submission.problem.title,
@@ -204,6 +209,11 @@ export const getSubmissionById = async (req, res) => {
   try {
     const submission = await Submission.findById(req.params.id);
     if (!submission) return res.status(404).json({ message: "Submission not found" });
+
+    // 🚨 Ownership check
+    if (submission.user.toString() !== req.user.id) {
+      return res.status(403).json({ message: "Access denied" });
+    }
 
     res.status(200).json(submission);
   } catch (error) {
