@@ -152,6 +152,16 @@ export const explainSubmission = async (req, res) => {
       language: submission.language
     });
 
+    // Handle AI service failure
+    if (!aiResult.success) {
+      return res.status(503).json({
+        success: false,
+        message: "AI explanation unavailable",
+        error: aiResult.error,
+        details: aiResult.explanation || "Please try again later."
+      });
+    }
+
     return res.status(200).json({
       success: true,
       explanation: aiResult.explanation

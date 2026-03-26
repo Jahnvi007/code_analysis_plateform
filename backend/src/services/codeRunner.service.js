@@ -68,7 +68,7 @@ export const runPythonCode = (code, input) => {
           { stdio: ["pipe", "pipe", "ignore"] }
         )
           .toString()
-          .trim();
+          .trim();npm 
 
         const raw = parseInt(output, 10);
 

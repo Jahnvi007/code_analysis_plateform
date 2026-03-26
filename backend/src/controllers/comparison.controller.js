@@ -1,7 +1,7 @@
 // src/controllers/comparison.controller.js
 import Submission from "../models/Submission.model.js";
 import Comparison from "../models/Comparison.model.js";
-import ollamaService from "../services/ollama.service.js";
+import ComparisonService from "../services/ollama/comparison.service.js";
 import { diffLines } from 'diff';
 
 export const compareSubmissions = async (req, res) => {
@@ -68,7 +68,7 @@ export const compareSubmissions = async (req, res) => {
     }
 
     // 7️⃣ AI Comparison
-    const aiResult = await ollamaService.compareCode(
+    const aiResult = await ComparisonService.compareCode(
       yourSubmission.code,
       topSubmission.code,
       yourSubmission.problem.title,
@@ -85,6 +85,15 @@ export const compareSubmissions = async (req, res) => {
         complexity: topSubmission.performance?.inferredComplexity || "Unknown"
       }
     );
+
+    // Handle AI service failure
+    if (!aiResult.success) {
+      return res.status(503).json({
+        message: "AI service temporarily unavailable",
+        error: aiResult.error,
+        details: aiResult.explanation || "Please try again later."
+      });
+    }
 
     // 8️⃣ Save comparison
     const comparison = await Comparison.create({
