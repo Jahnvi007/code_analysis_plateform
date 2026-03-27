@@ -73,3 +73,36 @@ export const getAllSubmissions = async (req, res) => {
     res.status(500).json({ message: "Failed to load submissions" });
   }
 };
+
+// Admin dashboard summary stats
+export const getAdminStats = async (req, res) => {
+  try {
+    const [totalUsers, totalProblems, totalSubmissions, todaySubmissions] = await Promise.all([
+      User.countDocuments({}),
+      Problem.countDocuments({}),
+      Submission.countDocuments({}),
+      Submission.countDocuments({
+        createdAt: {
+          $gte: new Date(new Date().setHours(0,0,0,0)), // start of today
+          $lt: new Date(new Date().setHours(23,59,59,999)) // end of today
+        }
+      })
+    ]);
+    // Optionally: problems in queue = those not expired and not today
+    const todayIST = new Date().toISOString().slice(0, 10);
+    const problemsInQueue = await Problem.countDocuments({ scheduledDayIST: { $gt: todayIST } });
+
+    res.json({
+      success: true,
+      data: {
+        totalUsers,
+        totalProblems,
+        totalSubmissions,
+        todaySubmissions,
+        problemsInQueue
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Failed to fetch admin summary stats" });
+  }
+};

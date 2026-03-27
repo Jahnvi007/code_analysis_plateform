@@ -285,3 +285,30 @@ function msToMinutesAndSeconds(ms) {
   const secs = Math.floor((ms % 60000) / 1000);
   return `${mins}m ${secs.toString().padStart(2, '0')}s`;
 }
+/* ================= GET ARCHIVE OF PAST PROBLEMS (USER) ================= */
+// Returns all *past* problems (where scheduledDayIST < today), sorted descending by date
+export const getArchiveProblems = async (req, res) => {
+  try {
+    const todayIST = getISTDayKey(new Date());
+
+    // Get all problems scheduled BEFORE today (the archive)
+    const problems = await Problem.find({
+      scheduledDayIST: { $lt: todayIST }
+    })
+      .select("title difficulty constraints scheduledDate scheduledDayIST createdAt")
+      .sort({ scheduledDayIST: -1 }); // Descending, newest first
+
+    // Tag each problem with isExpired = true
+    const withExpiry = problems.map(prob => ({
+      ...prob.toObject(),
+      isExpired: true
+    }));
+
+    res.status(200).json({
+      data: withExpiry,
+      total: withExpiry.length
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch problem archive" });
+  }
+};

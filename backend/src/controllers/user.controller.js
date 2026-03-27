@@ -47,30 +47,30 @@ export const getUserHistory = async (req, res) => {
     const bestSubByProblem = {};
     for (const sub of submissions) {
       const pid = sub.problem.toString();
-      // Use first accepted, otherwise store latest
-      if (sub.status === "Accepted" && !bestSubByProblem[pid]) {
-        bestSubByProblem[pid] = sub._id;
+      if (sub.status === "Accepted") {
+        // Always prefer 'Accepted'
+        bestSubByProblem[pid] = { accepted: true, submissionId: sub._id };
       } else if (!bestSubByProblem[pid]) {
-        bestSubByProblem[pid] = sub._id;
+        // Only fill if not solved, and only once for first non-accepted
+        bestSubByProblem[pid] = { accepted: false, submissionId: sub._id };
       }
     }
 
     // History calendar for this user
     const history = problems.map(prob => {
-      const solved = bestSubByProblem[prob._id.toString()] ? true : false;
-      const submissionId = bestSubByProblem[prob._id.toString()] || null;
+      const entry = bestSubByProblem[prob._id.toString()];
       return {
         date: prob.scheduledDayIST,
         problemId: prob._id,
         problemTitle: prob.title,
-        solved,
-        submissionId
+        solved: entry ? entry.accepted : false,
+        submissionId: entry ? entry.submissionId : null
       };
     });
 
     res.status(200).json(history);
   } catch (error) {
-     console.error('[USER HISTORY ERROR]',error);  
+    console.error('[USER HISTORY ERROR]', error);  
     res.status(500).json({ message: "Failed to fetch user history" });
   }
 };

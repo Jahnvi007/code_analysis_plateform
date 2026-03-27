@@ -1,8 +1,6 @@
-// backend/src/routes/problem.routes.js
 import express from "express";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import authorizeRoles from "../middlewares/role.middleware.js";
-
 import { validateProblem } from "../middlewares/validation.middleware.js";
 import {
   createProblem,
@@ -10,9 +8,11 @@ import {
   getProblemById,
   updateProblem,
   deleteProblem,
-  getTodayProblem
+  getTodayProblem,
+  getArchiveProblems, // <-- [ADD THIS]
+  getSolvedUsersForProblem
 } from "../controllers/problem.controller.js";
-import { getSolvedUsersForProblem } from '../controllers/problem.controller.js';
+
 const router = express.Router();
 
 /* ===== ADMIN ===== */
@@ -39,8 +39,11 @@ router.delete(
 );
 
 /* ===== USER ===== */
+// [NEW] Archive route before '/:id'!
+router.get("/archive", authMiddleware, getArchiveProblems);
+
 router.get("/", authMiddleware, getAllProblems);
-// /today MUST be placed before /:id so Express does not treat "today" as an ObjectId
+// /today MUST be before /:id so Express does not treat "today" as an ObjectId
 router.get("/today", authMiddleware, getTodayProblem);
 router.get(
   "/:problemId/solved-users",
@@ -50,6 +53,4 @@ router.get(
 );
 router.get("/:id", authMiddleware, getProblemById);
 
-
 export default router;
-

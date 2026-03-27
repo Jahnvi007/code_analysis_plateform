@@ -7,9 +7,10 @@ import {
   submitCode,
   getMySubmissions,
   getSubmissionById,
-  explainSubmission
+  explainSubmission,
+  compareSubmissions
 } from "../controllers/submission.controller.js";
-import { compareSubmissions } from "../controllers/submission.controller.js";
+
 console.log("🔥 submission.routes.js LOADED");
 
 const router = express.Router();
@@ -23,17 +24,22 @@ const submissionLimiter = rateLimit({
   message: { message: "Submission limit reached. Please try again later." }
 });
 
-/* Router-level logger (SAFE) */
+// Router-level logger (SAFE)
 router.use((req, res, next) => {
   console.log("📦 SUBMISSIONS ROUTER:", req.method, req.originalUrl);
   next();
 });
 
+// ---- ! ORDER MATTERS HERE ! ----
+// 1. /compare must be BEFORE /:id, or Express will treat 'compare' as an :id
+router.post("/compare", authMiddleware, compareSubmissions);
 router.post("/submit", authMiddleware, submissionLimiter, validateSubmission, submitCode);
 router.get("/my-submissions", authMiddleware, getMySubmissions);
+
+// /:id route should come after /compare
 router.get("/:id", authMiddleware, getSubmissionById);
-router.post("/compare", authMiddleware, compareSubmissions);
-/* 🔥 AI explanation route */
+
+// AI explanation *after* /:id route, otherwise may also be captured by :id
 router.post(
   "/:id/explain",
   authMiddleware,
@@ -43,7 +49,5 @@ router.post(
   },
   explainSubmission
 );
-router.post("/compare", authMiddleware, compareSubmissions);
-
 
 export default router;
