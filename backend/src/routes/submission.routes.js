@@ -9,7 +9,7 @@ import {
   getSubmissionById,
   explainSubmission
 } from "../controllers/submission.controller.js";
-
+import { compareSubmissions } from "../controllers/submission.controller.js";
 console.log("🔥 submission.routes.js LOADED");
 
 const router = express.Router();
@@ -32,7 +32,7 @@ router.use((req, res, next) => {
 router.post("/submit", authMiddleware, submissionLimiter, validateSubmission, submitCode);
 router.get("/my-submissions", authMiddleware, getMySubmissions);
 router.get("/:id", authMiddleware, getSubmissionById);
-
+router.post("/compare", authMiddleware, compareSubmissions);
 /* 🔥 AI explanation route */
 router.post(
   "/:id/explain",
@@ -43,5 +43,7 @@ router.post(
   },
   explainSubmission
 );
+router.post("/compare", authMiddleware, compareSubmissions);
+
 
 export default router;

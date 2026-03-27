@@ -2,6 +2,8 @@
 import express from "express";
 import authMiddleware from "../middlewares/auth.middleware.js";
 import authorizeRoles from "../middlewares/role.middleware.js";
+import { getProblemQueue, getAllUsersWithStats, getAllSubmissions } from "../controllers/admin.controller.js";
+
 
 const router = express.Router();
 
@@ -17,5 +19,9 @@ router.get(
     });
   }
 );
+router.get("/queue", getProblemQueue);
+router.get("/users", getAllUsersWithStats);
+router.get("/submissions", getAllSubmissions);
+
 
 export default router;

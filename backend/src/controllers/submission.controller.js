@@ -1,4 +1,5 @@
-// src/controllers/submission.controller.js
+// backend/src/controllers/submission.controller.js
+
 import Submission from "../models/Submission.model.js";
 import Problem from "../models/Problem.model.js";
 import { runPythonCode } from "../services/codeRunner.service.js";
@@ -10,11 +11,23 @@ import PerformanceAnalysisService from "../services/performanceAnalysis.service.
 import ExplanationService from "../services/ai/explanation.service.js";
 import { parsePagination } from "../utils/pagination.util.js";
 
+
+import { generateOptimizationFeedback } from "../utils/feedback.util.js";
+import { emitLeaderboardUpdate, emitSubmissionStatus } from "../../server.js"; // <-- For WS live events
+
+// --- IST helper ---
+function getISTDateString() {
+  const now = new Date();
+  now.setUTCHours(now.getUTCHours() + 5, now.getUTCMinutes() + 30);
+  return now.toISOString().slice(0, 10); // Format: 'YYYY-MM-DD'
+}
+
 /* ------------------- SUBMIT CODE ------------------- */
 export const submitCode = async (req, res) => {
   try {
     const { problemId, code, language } = req.body;
     const userId = req.user.id;
+    const userName = req.user.name; // for leaderboard broadcast
 
     if (!problemId || !code || !language) {
       return res.status(400).json({ message: "Missing required fields" });
@@ -22,6 +35,16 @@ export const submitCode = async (req, res) => {
 
     const problem = await Problem.findById(problemId);
     if (!problem) return res.status(404).json({ message: "Problem not found" });
+
+    // === DEADLINE ENFORCEMENT ===
+    const todayIST = getISTDateString();
+    const scheduledDay = problem.scheduledDate.toISOString().slice(0, 10);
+    if (todayIST !== scheduledDay) {
+      return res.status(403).json({ message: "You can only submit today's problem." });
+    }
+
+    // 1. Notify status: "running"
+    emitSubmissionStatus(userId, { status: "running", problemId });
 
     const submission = await Submission.create({
       user: userId,
@@ -36,16 +59,19 @@ export const submitCode = async (req, res) => {
     let totalExecutionTime = 0;
     let maxMemoryUsed = 0;
 
-    // 1️⃣ Run all test cases
+    // Run test cases
     for (let i = 0; i < problem.testCases.length; i++) {
       const testCase = problem.testCases[i];
-
       const wrappedCode = wrapPythonCode(code, testCase.input);
+
       const validation = validatePythonCode(wrappedCode);
       if (!validation.allowed) {
         submission.status = "Rejected";
         submission.rejectionReason = validation.reason;
         await submission.save();
+
+        // Immediate finish if rejected
+        emitSubmissionStatus(userId, { status: "complete", verdict: "Rejected", problemId });
 
         return res.status(200).json({
           verdict: "Rejected",
@@ -54,6 +80,7 @@ export const submitCode = async (req, res) => {
         });
       }
 
+      // Actually execute!
       const execution = await runPythonCode(wrappedCode);
       totalExecutionTime += execution.executionTimeMs;
       maxMemoryUsed = Math.max(maxMemoryUsed, execution.memoryUsedKB);
@@ -77,16 +104,18 @@ export const submitCode = async (req, res) => {
       if (!passed) finalVerdict = "Wrong Answer";
     }
 
-    // 2️⃣ Save metrics
+    // Save metrics
     submission.metrics = {
       totalExecutionTimeMs: totalExecutionTime,
       maxMemoryUsedKB: maxMemoryUsed
     };
 
-    // 3️⃣ Score calculation if Accepted
+    // 2. Notify status: "ai_analysing"
+    emitSubmissionStatus(userId, { status: "ai_analysing", problemId });
+
+    // Scoring and AI analysis if Accepted
     if (finalVerdict === "Accepted") {
       const problemDifficulty = problem.difficulty;
-
       // Fetch best benchmarks
       const bestSubmission = await Submission.findOne({
         problem: problemId,
@@ -112,9 +141,8 @@ export const submitCode = async (req, res) => {
 
       submission.score = Number.isFinite(score) ? score : 0;
 
-      // 4️⃣ Performance analysis via AI
+      // Performance analysis via AI
       const analysis = await PerformanceAnalysisService.analyzeSubmission(submission);
-
       submission.performanceAnalysis = {
         ...analysis,
         generatedAt: new Date()
@@ -124,12 +152,28 @@ export const submitCode = async (req, res) => {
     submission.status = finalVerdict;
     await submission.save();
 
+    // 3. Notify status: "complete"
+    emitSubmissionStatus(userId, { status: "complete", verdict: finalVerdict, problemId });
+
+    // 4. Update leaderboard if accepted
+    if (finalVerdict === "Accepted") {
+      emitLeaderboardUpdate({
+        problemId,
+        userId,
+        score: submission.score,
+        time: totalExecutionTime,
+        userName
+      });
+    }
+
     return res.status(200).json({
       verdict: finalVerdict,
       submission
     });
   } catch (error) {
     console.error("Submission error:", error);
+    // Notify error over socket too
+    emitSubmissionStatus(req.user.id, { status: "error", problemId: req.body.problemId });
     return res.status(500).json({ message: "Internal server error" });
   }
 };
@@ -218,5 +262,49 @@ export const getSubmissionById = async (req, res) => {
     res.status(200).json(submission);
   } catch (error) {
     res.status(500).json({ message: "Failed to fetch submission" });
+  }
+};
+
+
+
+
+
+// POST /api/submissions/compare
+export const compareSubmissions = async (req, res) => {
+  try {
+    const { submissionId1, submissionId2 } = req.body;
+    if (!submissionId1 || !submissionId2) {
+      return res.status(400).json({
+        success: false,
+        message: "Both submissionId1 and submissionId2 are required."
+      });
+    }
+
+    // Fetch both submissions in parallel
+    const [sub1, sub2] = await Promise.all([
+      Submission.findById(submissionId1),
+      Submission.findById(submissionId2)
+    ]);
+
+    if (!sub1 || !sub2) {
+      return res.status(404).json({
+        success: false,
+        message: "One or both submissions not found."
+      });
+    }
+
+    // Decide which is more optimized
+    // Example separation: submission1 = the user's, submission2 = reference/top solution; you can adapt logic as needed
+    const feedback = generateOptimizationFeedback(sub1, sub2);
+
+    return res.json({
+      success: true,
+      submission1: sub1,
+      submission2: sub2,
+      feedback // <-- Actionable advice field!
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 };
