@@ -8,7 +8,7 @@ Most endpoints require JWT token:
 
 ---
 
-## 🔐 Authentication Endpoints
+##  Authentication Endpoints
 
 ### Register User
 ```http
@@ -106,7 +106,7 @@ Request:
 
 ---
 
-## 🏃 Submission Endpoints
+##  Submission Endpoints
 
 ### Submit Code
 ```http
@@ -161,7 +161,7 @@ Response (200):
 
 ---
 
-## 🔄 Comparison Endpoints
+##  Comparison Endpoints
 
 ### Compare with Top Solution
 ```http
@@ -187,7 +187,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 📊 Stats Endpoints
+##  Stats Endpoints
 
 ### Get My Stats
 ```http
@@ -218,7 +218,7 @@ Response (200):
 
 ---
 
-## 🏥 Health Endpoint
+##  Health Endpoint
 
 ### Check Ollama Health
 ```http
@@ -234,7 +234,7 @@ Response (200):
 
 ---
 
-## ❌ Error Responses
+##  Error Responses
 
 ### 400 Bad Request
 ```json
