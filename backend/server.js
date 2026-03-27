@@ -32,11 +32,11 @@ export const io = new Server(httpServer, {
 const connectedClients = new Set();
 io.on("connection", (socket) => {
   connectedClients.add(socket);
-  // client should send their userId as soon as possible
-  socket.on("join-user-room", (userId) => {
+  // RECOMMENDED: use 'auth' event for max frontend compatibility
+  socket.on("auth", (userId) => {
     if (userId) {
-      socket.join(userId);
-      // Optionally, log: console.log(`Socket ${socket.id} joined room ${userId}`);
+      socket.join(String(userId));
+      // console.log(`Socket ${socket.id} joined room ${userId}`);
     }
   });
   socket.on("disconnect", () => connectedClients.delete(socket));
